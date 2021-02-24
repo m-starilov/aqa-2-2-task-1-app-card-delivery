@@ -13,6 +13,7 @@ import java.util.Date;
 
 import static com.codeborne.selenide.Condition.exactText;
 import static com.codeborne.selenide.Condition.visible;
+import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selectors.withText;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.open;
@@ -34,16 +35,19 @@ public class AppCardDeliveryTest {
 
     @Test
     void shouldSubmitRequest() {
+        String formattedDate = getStringFormattedDate();
         SelenideElement form = $("form");
         form.$("[data-test-id=city] input").setValue("Калуга");
         SelenideElement date = form.$$("[data-test-id=date] input").last();
         date.doubleClick();
         date.sendKeys(Keys.BACK_SPACE);
-        date.setValue(getStringFormattedDate());
+        date.setValue(formattedDate);
         form.$("[data-test-id=name] input").setValue("Евфимий Введенский");
         form.$("[data-test-id=phone] input").setValue("+78009379992");
         form.$("[data-test-id=agreement]").click();
         form.$$("button").find(exactText("Забронировать")).click();
-        $("[data-test-id=notification]").$(withText("Успешно!")).shouldBe(visible, Duration.ofSeconds(15));
+        $(byText("Успешно!")).shouldBe(visible, Duration.ofSeconds(15));
+        $(withText("Встреча успешно забронирована")).shouldBe(visible);
+        $(withText(formattedDate)).shouldBe(visible);
     }
 }
