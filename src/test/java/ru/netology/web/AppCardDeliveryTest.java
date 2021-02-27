@@ -19,11 +19,6 @@ import static com.codeborne.selenide.Selenide.open;
 public class AppCardDeliveryTest {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    public String getStringFormattedTodayPlusDays(int days) {
-        LocalDate today = LocalDate.now();
-        return today.plusDays(days).format(formatter);
-    }
-
     @BeforeEach
     void setUp() {
         open("http://localhost:9999");
@@ -31,47 +26,41 @@ public class AppCardDeliveryTest {
 
     @Test
     void shouldSubmitRequest() {
-        String formattedDate = getStringFormattedTodayPlusDays(5);
+        LocalDate futureDate = LocalDate.now().plusDays(5);
         SelenideElement form = $("form");
         form.$("[data-test-id=city] input").setValue("Калуга");
         SelenideElement date = form.$$("[data-test-id=date] input").last();
         date.doubleClick();
         date.sendKeys(Keys.BACK_SPACE);
-        date.setValue(formattedDate);
+        date.setValue(futureDate.format(formatter));
         form.$("[data-test-id=name] input").setValue("Евфимий Введенский");
         form.$("[data-test-id=phone] input").setValue("+78009379992");
         form.$("[data-test-id=agreement]").click();
         form.$$("button").find(exactText("Забронировать")).click();
         $(byText("Успешно!")).shouldBe(visible, Duration.ofSeconds(15));
         $(withText("Встреча успешно забронирована")).shouldBe(visible);
-        $(withText(formattedDate)).shouldBe(visible);
+        $(withText(futureDate.format(formatter))).shouldBe(visible);
     }
 
     @Test
     void shouldSubmitForm() {
-        LocalDate today = LocalDate.now();
-        LocalDate future = today.plusDays(7);
-        String futureDay = Integer.toString(future.getDayOfMonth());
-
+        LocalDate defaultDate = LocalDate.now().plusDays(3);
+        LocalDate futureDate = LocalDate.now().plusDays(7);
+        String futureDay = Integer.toString(futureDate.getDayOfMonth());
         SelenideElement form = $("form");
         form.$("[data-test-id=city] input").sendKeys("Ка");
         $(byText("Калуга")).click();
         form.$("[data-test-id=date] button").click();
-
-        if (today.getMonthValue() == future.getMonthValue()) {
-            $(".calendar-input__calendar-wrapper")
-                    .$(byText(futureDay)).click();
+        if (defaultDate.getMonthValue() != futureDate.getMonthValue()) {
+            $(".calendar__arrow_direction_right[data-step='1']").click();
         }
-        $$(".calendar__arrow").findBy(attribute("data-step", "1")).click();
-        $(".calendar-input__calendar-wrapper")
-                .$(byText(futureDay)).click();
-
+        $$("td.calendar__day").find(exactText(futureDay)).click();
         form.$("[data-test-id=name] input").setValue("Евфимий Введенский");
         form.$("[data-test-id=phone] input").setValue("+78009379992");
         form.$("[data-test-id=agreement]").click();
         form.$$("button").find(exactText("Забронировать")).click();
         $(byText("Успешно!")).shouldBe(visible, Duration.ofSeconds(15));
         $(withText("Встреча успешно забронирована")).shouldBe(visible);
-        $(withText(future.format(formatter))).shouldBe(visible);
+        $(withText(futureDate.format(formatter))).shouldBe(visible);
     }
 }
